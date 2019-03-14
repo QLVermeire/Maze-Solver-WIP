@@ -1,0 +1,179 @@
+/*includes*/
+#include<stdio.h>	
+#include<stdbool.h>	
+#include<string.h>	
+
+/*Create global variables*/
+int dataArray[6];
+int solutionLength;
+char *solvedArray;
+
+/*writeSolution writes the length of the solution and the way to solve
+the maze to a text file given in to the function */
+void writeSolution(char *fileName){
+	FILE* MyFile;							/*create a FILE called MyFile*/
+	MyFile = fopen(fileName, "w");			/*link MyFile to write ("w")*/
+	if (NULL != MyFile){					/*check if the file exists*/
+		/*Prints in the solution length, then newline, then the solving string*/
+		fprintf(MyFile, "%d\n%s", solutionLength, solvedArray);
+		fclose(MyFile);						/*closes the file*/
+	}
+}
+
+/*readInfo reads in the first 6 integers of the maze, which contains
+the rows, columns, start and endpoint, and puts these in a seperate
+dataArray for better oversight */
+void readInfo(char *fileName){
+	FILE* MyFile;							/*create a FILE called MyFile */
+	MyFile = fopen(fileName, "r");			/*link MyFile to read ("r") */
+	if (NULL != MyFile){					/*check if the file exists */
+		int i = 0;
+											/*Loop through the file 6 times to put the  
+											first 6 variables found into the dataArray*/
+		for (size_t iteration = 0; iteration < 6; iteration++){
+			fscanf(MyFile, "%d", &i);		/*scan for the next integer */
+			dataArray[iteration] = i;		/*put the integer in the dataArray */
+		}
+		fclose(MyFile);
+
+		printf("Startpoint: %d %d \n", dataArray[2], dataArray[3]); /* for debugging purposes */
+		printf("Endpoint: %d %d \n", dataArray[4], dataArray[5]);	/* for debugging purposes */
+	}
+	else{
+		
+		printf("File does not exist.");		/*if the file does not exist, warn the user */
+	}
+}
+
+/*readMaze reads in the entirety of the maze from a file and puts
+it into the global array of integers called mazeArray.*/
+void readMaze(char *fileName, int **mazeArray){
+	FILE* MyFile;							/*create a FILE called MyFile*/
+	MyFile = fopen(fileName, "r");			/*link MyFile to read ("r")*/
+	if (NULL != MyFile){
+		int value = 0;
+		/*The size of the file that contains the array of the maze will
+		be width*length + 6 points of data non-relevant to the maze */
+		int mazeSize = (dataArray[0] * dataArray[1]) + 6;
+		/* The program skips the first three lines as they contain the
+		not relevant for the actual maze */
+		for (int i = 0; i < 3; i++){
+			fscanf(MyFile, "%*[^\n]\n", NULL); /*throwaway scan the first three
+											     lines to skip*/
+		}
+		/* The program then loops through the whole text file,
+		reading in the data from it and fillint it into the blanks
+		of mazeArray at the correct row and column */
+		for (int i = 0; i < dataArray[1]; i++) {
+			for (int j = 0; j < dataArray[0]; j++) {
+				fscanf(MyFile, "%d", &value);
+				mazeArray[i][j] = value;
+			}
+		}
+		fclose(MyFile);
+	}
+	else{
+		printf("File does not exist.");
+	}
+}
+
+/* displayMaze is a function that displays the maze visually,
+initially this will be displayed in ASCII */
+void displayMaze(int **mazeArray){
+	//WORK IN PROGRESS, unfinished function
+	/*Print out the maze in numbers (used only for debugging)*/
+	for (int i = 0; i < dataArray[1]; i++) {
+		for (int j = 0; j < dataArray[0]; j++) {
+			printf("%d ", mazeArray[i][j]);
+		}
+		printf("\n");
+	}
+	//Define booleans for top, left, bottom and right
+	bool top;
+	bool left;
+	bool bottom;
+	bool right;
+
+	//Loop through the entire mazeArray
+	for (int i = 0; i < dataArray[1]; i++) {
+		for (int j = 0; j < dataArray[0]; j++) {
+			//grab the current position in the maze
+			int x = mazeArray[i][j];
+
+			/*set the walls back to false*/
+			top = false;
+			left = false;
+			bottom = false;
+			right = false;
+			/*check which walls there are */
+			if (x >= 8){ //top
+				x = x - 8;
+				top = true;
+			} if (x >= 4){ //left
+				x = x - 4;
+				left = true;
+			} if (x >= 2){ //bottom
+				x = x - 2;
+				bottom = true;
+			} if (x >= 1){ //right
+				x = x - 1;
+				right = true;
+			}
+			/*every loop iteration uses the data obtained from
+			the booleans to draw out in ASCII (unfinished)
+			for now, the bools draw out their true or false status */
+			printf("%d %d %d %d | ", top, left, bottom, right);
+		}
+		printf("\n");
+	}
+}
+
+/*SolveMaze is the function that will look into solving the maze
+currently an empty function and simply returns a spoofed value
+for the solved character array and length of the solution*/
+void SolveMaze(int **mazeArray){
+	solvedArray = "LDLDDLRULLURDRURDLD\0";				/*Spoofed array of characters that 
+														imitates a solution*/
+	solutionLength = ((int)(strlen(solvedArray))) - 2;	/*note: 2 was subtracted from the length 
+														because of the "\0" at the end */
+	printf("%d\n%s", solutionLength, solvedArray);		/*Print out the solution and length (used for debugging)*/
+}
+
+
+int main(int argc, char *argv[]){
+	if (argc != 3) {
+		/*Check if there are 3 arguments before executing the code,
+		if 3 arguments are not found, program will simply print out
+		the syntax and terminate*/
+		/*NOTE: I am aware it is meant to check for 4 arguments to see
+		whether -d for display or not is meant to be checked against,
+		but as my display is not yet implemented this function isn't either*/
+		printf("Use of program: %s [-d] MazeFileName SolutionFileName", argv[0]);
+	}
+	else{	
+		char *fileName = argv[1];			/*Set the fileName through the rest of 
+											the main to the first argument*/
+		FILE* MyFile;						/*Check if the file exists*/
+		MyFile = fopen(fileName, "r");		/*Open the file for reading*/
+		if (!(NULL != MyFile)){				/*Check if the file exists*/
+			printf("File not found.");		/*if file isn't found, program terminate 
+											and tells you file isn't found*/
+		}else{
+			readInfo(fileName);				/*Read in the top info (maze size, start point,
+											end point)*/
+
+			/*Create two-dimensional array of the size given in the data
+			dataArray read in by readInfo*/
+			int **mazeArray = malloc(dataArray[0] * sizeof(int*));
+			for (int i = 0; i < dataArray[1]; i++) {
+				mazeArray[i] = malloc(sizeof(int*)*dataArray[1]);
+			}
+			readMaze(fileName, mazeArray);	/*Read in the maze from file and put it 
+											into dataArray*/
+			displayMaze(mazeArray);			/*Display the maze visually*/
+			SolveMaze(mazeArray);			/*Solve the maze*/					
+			writeSolution(argv[2]);			/*Write the solution to file*/	
+			while (1);						/*for debug use, prevents console from closing*/
+		}
+	}
+}
